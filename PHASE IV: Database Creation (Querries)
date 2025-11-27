@@ -16,3 +16,18 @@ C:\REGAPP\REGIS\PRODUCT\23AI\ORADATA\FREE\PDBSEED\UNDOTBS01.DBF*
   2  ADMIN USER regis_admin IDENTIFIED BY admin
   3  FILE_NAME_CONVERT = ('C:\REGAPP\REGIS\PRODUCT\23Ai\ORADATA\FREE\PDBSEED\',
   4                       'C:\REGAPP\REGIS\PRODUCT\23Ai\ORADATA\FREE\tue_28757_Regis_medaid_db\');'''
+
+#Other usefull codes
+
+*show pdbs present*
+'show pdbs'
+
+*Save current container name for verification*
+'''COLUMN current_container NEW_VALUE current_container
+SELECT SYS_CONTEXT('USERENV', 'CON_NAME') AS current_container FROM DUAL;'''
+
+*Switch to new PDB*
+'ALTER SESSION SET CONTAINER = tue_28757_Regis_medaid_db;'
+
+*Verify switch*
+'SELECT SYS_CONTEXT('USERENV', 'CON_NAME') AS current_container FROM DUAL;'
