@@ -1,5 +1,18 @@
 #Creating a pluggable database
+
 *opening sqlplus and login as db admin*
 ' sqlplus sys as SYSDBA'
+
 *finding location of seed database files*
 'SELECT name FROM v$datafile where con_id=2;'
+
+**My database files location**
+*C:\REGAPP\REGIS\PRODUCT\23AI\ORADATA\FREE\PDBSEED\SYSTEM01.DBF
+C:\REGAPP\REGIS\PRODUCT\23AI\ORADATA\FREE\PDBSEED\SYSAUX01.DBF
+C:\REGAPP\REGIS\PRODUCT\23AI\ORADATA\FREE\PDBSEED\UNDOTBS01.DBF*
+
+*creating the pluggable database*
+'''  CREATE PLUGGABLE DATABASE tue_28757_Regis_medaid_db
+  2  ADMIN USER regis_admin IDENTIFIED BY admin
+  3  FILE_NAME_CONVERT = ('C:\REGAPP\REGIS\PRODUCT\23Ai\ORADATA\FREE\PDBSEED\',
+  4                       'C:\REGAPP\REGIS\PRODUCT\23Ai\ORADATA\FREE\tue_28757_Regis_medaid_db\');'''
