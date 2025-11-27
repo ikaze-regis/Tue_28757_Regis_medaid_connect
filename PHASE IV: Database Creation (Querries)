@@ -31,3 +31,56 @@ SELECT SYS_CONTEXT('USERENV', 'CON_NAME') AS current_container FROM DUAL;'''
 
 *Verify switch*
 'SELECT SYS_CONTEXT('USERENV', 'CON_NAME') AS current_container FROM DUAL;'
+
+
+
+#Tablespace configuration
+*Create tablespaces*
+'''CREATE TABLESPACE medaid_data 
+DATAFILE 'medaid_data01.dbf' SIZE 100M AUTOEXTEND ON NEXT 50M MAXSIZE 1G;'''
+
+*CREATE TABLESPACE medaid_index* 
+'''DATAFILE 'medaid_index01.dbf' SIZE 50M AUTOEXTEND ON NEXT 25M MAXSIZE 500M;'''
+
+*CREATE TEMPORARY TABLESPACE medaid_temp*
+'''TEMPFILE 'medaid_temp01.dbf' SIZE 50M AUTOEXTEND ON;'''
+
+
+
+#User configuration
+*Create application user8
+'''CREATE USER medaid_user IDENTIFIED BY firstaid123
+DEFAULT TABLESPACE medaid_data
+TEMPORARY TABLESPACE medaid_temp
+QUOTA UNLIMITED ON medaid_data
+QUOTA UNLIMITED ON medaid_index;'''
+
+*Grant privileges*
+'''GRANT CONNECT, RESOURCE TO medaid_user;
+GRANT CREATE SESSION, CREATE VIEW, CREATE SEQUENCE TO medaid_user;
+GRANT UNLIMITED TABLESPACE TO medaid_user;'''
+
+
+
+#Verification on tablespaces and user
+
+*Verify tablespaces*
+'''SELECT tablespace_name, file_name, bytes/1024/1024 as size_mb 
+FROM dba_data_files 
+WHERE tablespace_name LIKE 'MEDAID%';'''
+
+*Verify user*
+'''SELECT username, default_tablespace, temporary_tablespace, created
+FROM dba_users 
+WHERE username = 'MEDAID_USER';'''
+
+*Verify privileges*
+'''SELECT privilege FROM dba_sys_privs WHERE grantee = 'MEDAID_USER'
+UNION
+SELECT privilege FROM dba_sys_privs WHERE grantee IN (
+    SELECT granted_role FROM dba_role_privs WHERE grantee = 'MEDAID_USER'
+);'''
+
+
+
+
