@@ -35,20 +35,23 @@ SELECT SYS_CONTEXT('USERENV', 'CON_NAME') AS current_container FROM DUAL;'''
 
 
 #Tablespace configuration
-*Create tablespaces*
-'''CREATE TABLESPACE medaid_data 
+*Data tablespace*
+'''Create tablespaces 
+CREATE TABLESPACE medaid_data 
 DATAFILE 'medaid_data01.dbf' SIZE 100M AUTOEXTEND ON NEXT 50M MAXSIZE 1G;'''
 
-*CREATE TABLESPACE medaid_index* 
-'''DATAFILE 'medaid_index01.dbf' SIZE 50M AUTOEXTEND ON NEXT 25M MAXSIZE 500M;'''
+*Index tablespace* 
+'''CREATE TABLESPACE medaid_index
+ DATAFILE 'medaid_index01.dbf' SIZE 50M AUTOEXTEND ON NEXT 25M MAXSIZE 500M;'''
 
-*CREATE TEMPORARY TABLESPACE medaid_temp*
-'''TEMPFILE 'medaid_temp01.dbf' SIZE 50M AUTOEXTEND ON;'''
+*Temporary tablespace*
+'''CREATE TEMPORARY TABLESPACE medaid_temp
+ TEMPFILE 'medaid_temp01.dbf' SIZE 50M AUTOEXTEND ON;'''
 
 
 
 #User configuration
-*Create application user8
+*Create application user*
 '''CREATE USER medaid_user IDENTIFIED BY firstaid123
 DEFAULT TABLESPACE medaid_data
 TEMPORARY TABLESPACE medaid_temp
