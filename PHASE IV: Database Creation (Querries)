@@ -1,7 +1,7 @@
-#Creating a pluggable database
+##Creating a pluggable database
 
 *opening sqlplus and login as db admin*
-' sqlplus sys as SYSDBA'
+'sqlplus sys as SYSDBA'
 
 *finding location of seed database files*
 'SELECT name FROM v$datafile where con_id=2;'
