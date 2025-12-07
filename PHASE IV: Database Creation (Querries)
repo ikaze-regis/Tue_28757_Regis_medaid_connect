@@ -36,8 +36,7 @@ SELECT SYS_CONTEXT('USERENV', 'CON_NAME') AS current_container FROM DUAL;'''
 
 #Tablespace configuration
 *Data tablespace*
-'''Create tablespaces 
-CREATE TABLESPACE medaid_data 
+'''CREATE TABLESPACE medaid_data 
 DATAFILE 'medaid_data01.dbf' SIZE 100M AUTOEXTEND ON NEXT 50M MAXSIZE 1G;'''
 
 *Index tablespace* 
