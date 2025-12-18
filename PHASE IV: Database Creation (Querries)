@@ -85,4 +85,50 @@ SELECT privilege FROM dba_sys_privs WHERE grantee IN (
 
 
 
+-- Open your PDB
+ALTER PLUGGABLE DATABASE tue_28757_Regis_medaid_db OPEN;
+
+-- Set it to open automatically on restart
+ALTER PLUGGABLE DATABASE tue_28757_Regis_medaid_db SAVE STATE;
+
+-- Check current memory settings
+SHOW PARAMETER sga_target;
+SHOW PARAMETER pga_aggregate_target;
+
+-- Set memory parameters (adjust based on your system)
+ALTER SYSTEM SET sga_target = 500M SCOPE = BOTH;
+ALTER SYSTEM SET pga_aggregate_target = 200M SCOPE = BOTH;
+ALTER SYSTEM SET memory_target = 700M SCOPE = BOTH;
+
+
+-- Check if archive logging is enabled
+ARCHIVE LOG LIST;
+
+-- Enable archive logging (if not enabled)
+-- First, shutdown the database
+SHUTDOWN IMMEDIATE;
+
+-- Start in mount mode
+STARTUP MOUNT;
+
+-- Enable archiving
+ALTER DATABASE ARCHIVELOG;
+
+-- Open database
+ALTER DATABASE OPEN;
+
+
+-- Check current datafiles
+SELECT file_name, tablespace_name, bytes/1024/1024 as MB, 
+       autoextensible, maxbytes/1024/1024 as max_MB
+FROM dba_data_files
+WHERE tablespace_name IN ('MADAID_DATA', 'MADAID_INDEX');
+
+-- Add AUTOEXTEND if not set
+ALTER DATABASE DATAFILE 'medaid_data01.dbf' 
+AUTOEXTEND ON NEXT 50M MAXSIZE 2G;
+
+ALTER DATABASE DATAFILE 'medaid_index01.dbf' 
+AUTOEXTEND ON NEXT 25M MAXSIZE 1G;
+
 
