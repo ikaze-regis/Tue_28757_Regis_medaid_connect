@@ -1,0 +1,108 @@
+# Business Process Explanation - Medaid Connect
+
+## 1. Process Overview
+The business process models the emergency response workflow where individuals access first aid guidance through the Medaid Connect platform. The process begins when an emergency occurs and ends when the situation is resolved or professional help arrives.
+
+## 2. Key Actors and Responsibilities
+
+### Actor 1: User in Emergency
+- **Role:** Primary beneficiary requiring first aid guidance
+- **Responsibilities:**
+  - Access the Medaid Connect platform
+  - Identify and select the appropriate emergency type
+  - Follow step-by-step instructions provided
+  - Provide optional feedback on guide helpfulness
+- **Key Interaction:** Mobile/desktop interface for emergency selection
+
+### Actor 2: Medaid Connect System
+- **Role:** Digital platform delivering first aid content
+- **Responsibilities:**
+  - Present categorized emergency options
+  - Retrieve and display appropriate step-by-step guides
+  - Track user interaction metrics (start time, duration)
+  - Collect and process user feedback
+  - Ensure responsive design for various devices
+- **Key Interaction:** Web/mobile application interface
+
+### Actor 3: Database System
+- **Role:** Backend data management and analytics
+- **Responsibilities:**
+  - Store comprehensive first aid guides and instructions
+  - Log all user interactions for analytics
+  - Record feedback and ratings
+  - Generate real-time usage statistics
+  - Support Business Intelligence (BI) reporting
+- **Key Interaction:** Oracle PL/SQL database operations
+
+## 3. Process Flow Details
+
+### Phase 1: Emergency Identification (User + System)
+1. User accesses Medaid Connect via mobile/web interface
+2. System displays categorized emergency types (Medical, Trauma, Environmental, Pediatric)
+3. User selects appropriate emergency category and specific type
+
+### Phase 2: Guidance Delivery (System + Database)
+4. System queries database for the selected emergency guide
+5. Database returns step-by-step instructions with images/videos
+6. System presents instructions in sequential, easy-to-follow format
+
+### Phase 3: User Execution (User)
+7. User follows each instruction step by step
+8. User marks completion when emergency is handled or help arrives
+
+### Phase 4: Feedback and Analytics (All Actors)
+9. System optionally prompts for feedback on guide helpfulness
+10. User provides rating (1-5 stars) and optional comments
+11. Database logs all interaction data for analytics
+12. BI system updates dashboards with new usage patterns
+
+## 4. MIS Relevance and Functions
+
+### Management Information System Functions:
+- **Real-time Data Processing:** Immediate logging of emergency accesses
+- **Decision Support:** Analytics on most common emergencies by location/time
+- **Performance Monitoring:** Guide effectiveness through completion rates
+- **Resource Optimization:** Identifying which guides need improvement
+- **Strategic Planning:** Data for public health initiatives
+
+### Data Management:
+- **Structured Data:** Emergency types, steps, user demographics
+- **Transactional Data:** Each guide access and completion
+- **Analytical Data:** Aggregated usage patterns and trends
+- **Feedback Data:** User ratings and qualitative comments
+
+## 5. Business Impact and Value
+
+### Organizational Impact:
+- **Public Health Enhancement:** Improved emergency response in communities
+- **Training Efficiency:** Identifies knowledge gaps in population
+- **Resource Allocation:** Guides emergency service planning in Rwanda
+- **Policy Development:** Data-driven insights for public safety decisions
+
+### Analytics Opportunities:
+1. **Pattern Analysis:** Identify peak emergency times and locations
+2. **Effectiveness Metrics:** Measure guide completion and success rates
+3. **Demographic Insights:** Understand user distribution and needs
+4. **Predictive Modeling:** Anticipate emergency spikes based on patterns
+5. **Geographic Hotspots:** Map emergency frequency by Rwandan provinces
+
+## 6. Technology Integration
+
+### Current System Components:
+- Frontend: Web/mobile interface (HTML5, CSS3, JavaScript)
+- Backend: Oracle Database 23ai with PL/SQL
+- Analytics: Built-in BI tools and custom reports
+- Integration: REST APIs for potential mobile app development
+
+### Future Integration Potential:
+- Emergency Services: Direct connection to Rwanda's 112 system
+- Healthcare Systems: Integration with hospital records
+- Mobile Networks: SMS-based access for low-connectivity areas
+- IoT Devices: Smart device integration for automated emergency detection
+
+---
+
+**Process Owner:** Medaid Connect Platform Team  
+**Last Updated:** November 2025  
+**Review Cycle:** Quarterly  
+**Compliance:** Data privacy regulations (anonymous user tracking only)
