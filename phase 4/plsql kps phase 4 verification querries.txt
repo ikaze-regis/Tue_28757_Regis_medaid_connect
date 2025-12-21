@@ -1,0 +1,206 @@
+-- ============================================
+-- PHASE IV: VERIFICATION SCRIPT
+-- ============================================
+
+SET SERVEROUTPUT ON;
+SET LINESIZE 200;
+SET PAGESIZE 50;
+
+PROMPT ============================================
+PROMPT PHASE IV - VERIFICATION REPORT
+PROMPT ============================================
+PROMPT Student: Regis | ID: 28757
+PROMPT Project: Medaid Connect
+PROMPT Database: tue_28757_Regis_medaid_db
+PROMPT Date: November 2025
+PROMPT ============================================
+
+-- 1. PDB STATUS
+PROMPT 
+PROMPT 1. PDB STATUS
+PROMPT ============================================
+SELECT 
+    con_id,
+    name as pdb_name,
+    open_mode,
+    restricted,
+    open_time,
+    total_size/1024/1024 as size_mb
+FROM v$pdbs
+WHERE name = 'TUE_28757_REGIS_MEDAID_DB';
+
+-- 2. TABLESPACES
+PROMPT 
+PROMPT 2. TABLESPACES
+PROMPT ============================================
+SELECT 
+    tablespace_name,
+    status,
+    contents,
+    logging,
+    extent_management,
+    allocation_type,
+    (SELECT SUM(bytes)/1024/1024 
+     FROM dba_data_files 
+     WHERE tablespace_name = dt.tablespace_name) as allocated_mb
+FROM dba_tablespaces dt
+ORDER BY tablespace_name;
+
+-- 3. DATAFILES DETAILS
+PROMPT 
+PROMPT 3. DATAFILES DETAILS
+PROMPT ============================================
+SELECT 
+    file_id,
+    file_name,
+    tablespace_name,
+    bytes/1024/1024 as size_mb,
+    autoextensible,
+    maxbytes/1024/1024 as max_size_mb,
+    increment_by * 8192/1024/1024 as increment_mb,
+    status
+FROM dba_data_files
+ORDER BY tablespace_name, file_id;
+
+-- 4. USER INFORMATION
+PROMPT 
+PROMPT 4. USER INFORMATION
+PROMPT ============================================
+SELECT 
+    username,
+    user_id,
+    default_tablespace,
+    temporary_tablespace,
+    created,
+    account_status,
+    lock_date,
+    expiry_date
+FROM dba_users
+WHERE username = 'MEDAID_USER';
+
+-- 5. USER PRIVILEGES SUMMARY
+PROMPT 
+PROMPT 5. USER PRIVILEGES SUMMARY
+PROMPT ============================================
+SELECT 
+    'SYSTEM PRIVILEGES' as privilege_type,
+    COUNT(*) as count
+FROM dba_sys_privs
+WHERE grantee = 'MEDAID_USER'
+UNION ALL
+SELECT 
+    'ROLE PRIVILEGES',
+    COUNT(DISTINCT granted_role)
+FROM dba_role_privs
+WHERE grantee = 'MEDAID_USER'
+UNION ALL
+SELECT 
+    'TABLESPACE QUOTAS',
+    COUNT(*)
+FROM dba_ts_quotas
+WHERE username = 'MEDAID_USER';
+
+-- 6. DETAILED SYSTEM PRIVILEGES
+PROMPT 
+PROMPT 6. DETAILED SYSTEM PRIVILEGES
+PROMPT ============================================
+SELECT privilege, admin_option
+FROM dba_sys_privs
+WHERE grantee = 'MEDAID_USER'
+ORDER BY privilege;
+
+-- 7. MEMORY PARAMETERS
+PROMPT 
+PROMPT 7. MEMORY PARAMETERS
+PROMPT ============================================
+SELECT 
+    name,
+    value/1024/1024 as value_mb,
+    display_value,
+    isdefault
+FROM v$parameter
+WHERE name IN ('sga_target', 'pga_aggregate_target', 'memory_target')
+ORDER BY name;
+
+-- 8. DATABASE PROPERTIES
+PROMPT 
+PROMPT 8. DATABASE PROPERTIES
+PROMPT ============================================
+SELECT 
+    property_name,
+    property_value,
+    description
+FROM database_properties
+WHERE property_name LIKE '%DEFAULT%'
+   OR property_name LIKE '%TABLESPACE%'
+ORDER BY property_name;
+
+-- 9. CONNECTION TEST (Comment out if running as MEDAID_USER)
+/*
+PROMPT 
+PROMPT 9. CONNECTION TEST
+PROMPT ============================================
+-- Test connection by creating a simple table
+DECLARE
+    v_table_exists NUMBER;
+BEGIN
+    -- Check if test table exists
+    SELECT COUNT(*) INTO v_table_exists
+    FROM user_tables
+    WHERE table_name = 'TEST_PHASE_IV';
+    
+    IF v_table_exists = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE TABLE test_phase_iv (id NUMBER, name VARCHAR2(50))';
+        EXECUTE IMMEDIATE 'INSERT INTO test_phase_iv VALUES (1, ''Test Success'')';
+        COMMIT;
+        DBMS_OUTPUT.PUT_LINE('✓ Connection test: User can create tables and insert data');
+        
+        -- Cleanup
+        EXECUTE IMMEDIATE 'DROP TABLE test_phase_iv';
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('✓ Test table already exists');
+    END IF;
+END;
+/
+*/
+
+-- 10. SUMMARY
+PROMPT 
+PROMPT ============================================
+PROMPT VERIFICATION SUMMARY
+PROMPT ============================================
+PROMPT 
+SELECT 
+    'PDB Status' as check_item,
+    CASE WHEN (SELECT COUNT(*) FROM v$pdbs WHERE name = 'TUE_28757_REGIS_MEDAID_DB' AND open_mode = 'READ WRITE') > 0 
+         THEN '✅ PASS' ELSE '❌ FAIL' END as status
+FROM dual
+UNION ALL
+SELECT 
+    'Tablespaces Exist',
+    CASE WHEN (SELECT COUNT(*) FROM dba_tablespaces WHERE tablespace_name LIKE 'MEDAID%') >= 3 
+         THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM dual
+UNION ALL
+SELECT 
+    'User Created',
+    CASE WHEN (SELECT COUNT(*) FROM dba_users WHERE username = 'MEDAID_USER') > 0 
+         THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM dual
+UNION ALL
+SELECT 
+    'User Privileges',
+    CASE WHEN (SELECT COUNT(*) FROM dba_sys_privs WHERE grantee = 'MEDAID_USER') > 5 
+         THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM dual
+UNION ALL
+SELECT 
+    'Memory Configured',
+    CASE WHEN (SELECT COUNT(*) FROM v$parameter WHERE name = 'sga_target' AND value > 0) > 0 
+         THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM dual;
+
+PROMPT 
+PROMPT ============================================
+PROMPT PHASE IV VERIFICATION COMPLETE
+PROMPT ============================================

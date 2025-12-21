@@ -1,0 +1,435 @@
+-- ============================================
+-- PHASE IV: DATABASE CREATION - COMPLETE SCRIPT
+-- Student: Regis | ID: 28757
+-- Project: Medaid Connect
+-- Database: tue_28757_Regis_medaid_db
+-- Date: November 2025
+-- ============================================
+
+SET SERVEROUTPUT ON;
+SET FEEDBACK ON;
+SET LINESIZE 200;
+SET PAGESIZE 50;
+
+-- ============================================
+-- SECTION 1: PDB CREATION & CONFIGURATION
+-- ============================================
+
+PROMPT ============================================
+PROMPT SECTION 1: PDB CREATION & CONFIGURATION
+PROMPT ============================================
+
+-- Step 1.1: Connect as SYSDBA
+CONNECT sys as SYSDBA;
+
+-- Step 1.2: Check existing PDBs
+PROMPT 
+PROMPT 1.2: Checking existing PDBs...
+SHOW PDBS;
+
+-- Step 1.3: Create PDB if it doesn't exist
+DECLARE
+    v_pdb_exists NUMBER;
+BEGIN
+    -- Check if PDB already exists
+    SELECT COUNT(*) INTO v_pdb_exists
+    FROM v$pdbs
+    WHERE name = 'TUE_28757_REGIS_MEDAID_DB';
+    
+    IF v_pdb_exists = 0 THEN
+        PROMPT Creating PDB: tue_28757_Regis_medaid_db...
+        
+        -- Create the pluggable database
+        EXECUTE IMMEDIATE q'{
+            CREATE PLUGGABLE DATABASE tue_28757_Regis_medaid_db
+            ADMIN USER regis_admin IDENTIFIED BY admin
+            FILE_NAME_CONVERT = (
+                'C:\REGAPP\REGIS\PRODUCT\23Ai\ORADATA\FREE\PDBSEED\',
+                'C:\REGAPP\REGIS\PRODUCT\23Ai\ORADATA\FREE\tue_28757_Regis_medaid_db\'
+            )
+        }';
+        
+        DBMS_OUTPUT.PUT_LINE('PDB created successfully');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('PDB already exists');
+    END IF;
+END;
+/
+
+-- Step 1.4: Open the PDB
+PROMPT 
+PROMPT 1.4: Opening PDB...
+ALTER PLUGGABLE DATABASE tue_28757_Regis_medaid_db OPEN;
+
+-- Step 1.5: Set to open automatically on restart
+PROMPT 
+PROMPT 1.5: Setting PDB to open automatically...
+ALTER PLUGGABLE DATABASE tue_28757_Regis_medaid_db SAVE STATE;
+
+-- Step 1.6: Switch to the PDB
+PROMPT 
+PROMPT 1.6: Switching to Medaid Connect PDB...
+ALTER SESSION SET CONTAINER = tue_28757_Regis_medaid_db;
+
+-- Step 1.7: Verify current container
+COLUMN current_container NEW_VALUE current_container
+SELECT SYS_CONTEXT('USERENV', 'CON_NAME') AS current_container FROM DUAL;
+
+PROMPT 
+PROMPT Current container: &&current_container
+
+-- ============================================
+-- SECTION 2: TABLESPACE CONFIGURATION
+-- ============================================
+
+PROMPT 
+PROMPT ============================================
+PROMPT SECTION 2: TABLESPACE CONFIGURATION
+PROMPT ============================================
+
+-- Step 2.1: Create MEDAID_DATA tablespace
+BEGIN
+    DECLARE
+        v_tablespace_exists NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_tablespace_exists
+        FROM dba_tablespaces
+        WHERE tablespace_name = 'MEDAID_DATA';
+        
+        IF v_tablespace_exists = 0 THEN
+            EXECUTE IMMEDIATE q'{
+                CREATE TABLESPACE medaid_data 
+                DATAFILE 'medaid_data01.dbf' 
+                SIZE 100M 
+                AUTOEXTEND ON NEXT 50M 
+                MAXSIZE 1G
+            }';
+            DBMS_OUTPUT.PUT_LINE('Created MEDAID_DATA tablespace');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('MEDAID_DATA tablespace already exists');
+        END IF;
+    END;
+END;
+/
+
+-- Step 2.2: Create MEDAID_INDEX tablespace
+BEGIN
+    DECLARE
+        v_tablespace_exists NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_tablespace_exists
+        FROM dba_tablespaces
+        WHERE tablespace_name = 'MEDAID_INDEX';
+        
+        IF v_tablespace_exists = 0 THEN
+            EXECUTE IMMEDIATE q'{
+                CREATE TABLESPACE medaid_index
+                DATAFILE 'medaid_index01.dbf' 
+                SIZE 50M 
+                AUTOEXTEND ON NEXT 25M 
+                MAXSIZE 500M
+            }';
+            DBMS_OUTPUT.PUT_LINE('Created MEDAID_INDEX tablespace');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('MEDAID_INDEX tablespace already exists');
+        END IF;
+    END;
+END;
+/
+
+-- Step 2.3: Create MEDAID_TEMP tablespace
+BEGIN
+    DECLARE
+        v_tablespace_exists NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_tablespace_exists
+        FROM dba_tablespaces
+        WHERE tablespace_name = 'MEDAID_TEMP';
+        
+        IF v_tablespace_exists = 0 THEN
+            EXECUTE IMMEDIATE q'{
+                CREATE TEMPORARY TABLESPACE medaid_temp
+                TEMPFILE 'medaid_temp01.dbf' 
+                SIZE 50M 
+                AUTOEXTEND ON
+            }';
+            DBMS_OUTPUT.PUT_LINE('Created MEDAID_TEMP tablespace');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('MEDAID_TEMP tablespace already exists');
+        END IF;
+    END;
+END;
+/
+
+-- Step 2.4: Verify tablespaces
+PROMPT 
+PROMPT 2.4: Verifying tablespaces...
+SELECT 
+    tablespace_name,
+    status,
+    contents,
+    (SELECT SUM(bytes)/1024/1024 
+     FROM dba_data_files 
+     WHERE tablespace_name = dt.tablespace_name) as size_mb
+FROM dba_tablespaces dt
+WHERE tablespace_name LIKE 'MEDAID%'
+ORDER BY tablespace_name;
+
+-- ============================================
+-- SECTION 3: USER CONFIGURATION
+-- ============================================
+
+PROMPT 
+PROMPT ============================================
+PROMPT SECTION 3: USER CONFIGURATION
+PROMPT ============================================
+
+-- Step 3.1: Create application user
+BEGIN
+    DECLARE
+        v_user_exists NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_user_exists
+        FROM dba_users
+        WHERE username = 'MEDAID_USER';
+        
+        IF v_user_exists = 0 THEN
+            EXECUTE IMMEDIATE q'{
+                CREATE USER medaid_user IDENTIFIED BY firstaid123
+                DEFAULT TABLESPACE medaid_data
+                TEMPORARY TABLESPACE medaid_temp
+                QUOTA UNLIMITED ON medaid_data
+                QUOTA UNLIMITED ON medaid_index
+            }';
+            DBMS_OUTPUT.PUT_LINE('Created user: MEDAID_USER');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('User MEDAID_USER already exists');
+        END IF;
+    END;
+END;
+/
+
+-- Step 3.2: Grant privileges
+PROMPT 
+PROMPT 3.2: Granting privileges...
+GRANT CONNECT, RESOURCE TO medaid_user;
+GRANT CREATE SESSION, CREATE VIEW, CREATE SEQUENCE TO medaid_user;
+GRANT UNLIMITED TABLESPACE TO medaid_user;
+
+-- Additional useful privileges
+GRANT CREATE TABLE, CREATE PROCEDURE, CREATE TRIGGER TO medaid_user;
+GRANT CREATE ANY INDEX TO medaid_user;
+
+-- Step 3.3: Verify user
+PROMPT 
+PROMPT 3.3: Verifying user configuration...
+SELECT 
+    username,
+    default_tablespace,
+    temporary_tablespace,
+    created,
+    account_status
+FROM dba_users 
+WHERE username = 'MEDAID_USER';
+
+-- Step 3.4: Verify privileges
+PROMPT 
+PROMPT 3.4: Verifying privileges...
+SELECT privilege 
+FROM dba_sys_privs 
+WHERE grantee = 'MEDAID_USER'
+UNION
+SELECT privilege 
+FROM dba_sys_privs 
+WHERE grantee IN (
+    SELECT granted_role 
+    FROM dba_role_privs 
+    WHERE grantee = 'MEDAID_USER'
+)
+ORDER BY privilege;
+
+-- ============================================
+-- SECTION 4: MEMORY CONFIGURATION
+-- ============================================
+
+PROMPT 
+PROMPT ============================================
+PROMPT SECTION 4: MEMORY CONFIGURATION
+PROMPT ============================================
+
+-- Step 4.1: Check current memory settings
+PROMPT 
+PROMPT 4.1: Current memory settings...
+SHOW PARAMETER sga_target;
+SHOW PARAMETER pga_aggregate_target;
+SHOW PARAMETER memory_target;
+
+-- Step 4.2: Set memory parameters
+PROMPT 
+PROMPT 4.2: Setting memory parameters...
+BEGIN
+    -- Set SGA target (System Global Area)
+    EXECUTE IMMEDIATE 'ALTER SYSTEM SET sga_target = 500M SCOPE = BOTH';
+    
+    -- Set PGA target (Program Global Area)
+    EXECUTE IMMEDIATE 'ALTER SYSTEM SET pga_aggregate_target = 200M SCOPE = BOTH';
+    
+    -- Set total memory target
+    EXECUTE IMMEDIATE 'ALTER SYSTEM SET memory_target = 700M SCOPE = BOTH';
+    
+    DBMS_OUTPUT.PUT_LINE('Memory parameters configured successfully');
+END;
+/
+
+-- ============================================
+-- SECTION 5: ARCHIVE LOGGING CONFIGURATION
+-- ============================================
+
+PROMPT 
+PROMPT ============================================
+PROMPT SECTION 5: ARCHIVE LOGGING CONFIGURATION
+PROMPT ============================================
+
+-- Step 5.1: Check current archive log status
+PROMPT 
+PROMPT 5.1: Checking archive log status...
+ARCHIVE LOG LIST;
+
+-- Note: Archive logging requires database restart
+-- For now, we'll document the commands
+PROMPT 
+PROMPT Note: To enable archive logging, run these commands:
+PROMPT 1. SHUTDOWN IMMEDIATE;
+PROMPT 2. STARTUP MOUNT;
+PROMPT 3. ALTER DATABASE ARCHIVELOG;
+PROMPT 4. ALTER DATABASE OPEN;
+
+-- ============================================
+-- SECTION 6: AUTOEXTEND CONFIGURATION
+-- ============================================
+
+PROMPT 
+PROMPT ============================================
+PROMPT SECTION 6: AUTOEXTEND CONFIGURATION
+PROMPT ============================================
+
+-- Step 6.1: Check current datafiles
+PROMPT 
+PROMPT 6.1: Current datafile configuration...
+SELECT 
+    file_name,
+    tablespace_name,
+    bytes/1024/1024 as size_mb,
+    autoextensible,
+    maxbytes/1024/1024 as max_size_mb
+FROM dba_data_files
+WHERE tablespace_name IN ('MEDAID_DATA', 'MEDAID_INDEX')
+ORDER BY tablespace_name;
+
+-- Step 6.2: Configure AUTOEXTEND if needed
+BEGIN
+    -- For MEDAID_DATA
+    BEGIN
+        EXECUTE IMMEDIATE q'{
+            ALTER DATABASE 
+            DATAFILE 'medaid_data01.dbf' 
+            AUTOEXTEND ON 
+            NEXT 50M 
+            MAXSIZE 2G
+        }';
+        DBMS_OUTPUT.PUT_LINE('Configured AUTOEXTEND for MEDAID_DATA');
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Note: Could not modify MEDAID_DATA - ' || SQLERRM);
+    END;
+    
+    -- For MEDAID_INDEX
+    BEGIN
+        EXECUTE IMMEDIATE q'{
+            ALTER DATABASE 
+            DATAFILE 'medaid_index01.dbf' 
+            AUTOEXTEND ON 
+            NEXT 25M 
+            MAXSIZE 1G
+        }';
+        DBMS_OUTPUT.PUT_LINE('Configured AUTOEXTEND for MEDAID_INDEX');
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Note: Could not modify MEDAID_INDEX - ' || SQLERRM);
+    END;
+END;
+/
+
+-- ============================================
+-- SECTION 7: FINAL VERIFICATION
+-- ============================================
+
+PROMPT 
+PROMPT ============================================
+PROMPT SECTION 7: FINAL VERIFICATION
+PROMPT ============================================
+
+-- Step 7.1: Verify PDB status
+PROMPT 
+PROMPT 7.1: Final PDB status...
+SELECT 
+    name,
+    open_mode,
+    restricted,
+    total_size/1024/1024 as size_mb
+FROM v$pdbs 
+WHERE name = 'TUE_28757_REGIS_MEDAID_DB';
+
+-- Step 7.2: Verify all tablespaces
+PROMPT 
+PROMPT 7.2: All tablespaces in PDB...
+SELECT 
+    tablespace_name,
+    status,
+    contents,
+    extent_management,
+    allocation_type
+FROM dba_tablespaces
+ORDER BY tablespace_name;
+
+-- Step 7.3: Verify datafiles
+PROMPT 
+PROMPT 7.3: All datafiles...
+SELECT 
+    tablespace_name,
+    file_name,
+    bytes/1024/1024 as size_mb,
+    autoextensible,
+    maxbytes/1024/1024 as max_size_mb
+FROM dba_data_files
+ORDER BY tablespace_name, file_name;
+
+-- Step 7.4: Verify user can connect
+PROMPT 
+PROMPT 7.4: Testing user connection...
+-- Note: This would be tested separately
+PROMPT To test connection, run:
+PROMPT sqlplus medaid_user/firstaid123@localhost:1521/tue_28757_Regis_medaid_db
+
+-- Step 7.5: Show summary
+PROMPT 
+PROMPT ============================================
+PROMPT PHASE IV SETUP COMPLETE - SUMMARY
+PROMPT ============================================
+PROMPT 
+PROMPT  PDB: tue_28757_Regis_medaid_db (OPEN)
+PROMPT  Tablespaces: MEDAID_DATA, MEDAID_INDEX, MEDAID_TEMP
+PROMPT  User: MEDAID_USER with full privileges
+PROMPT  Memory: SGA=500M, PGA=200M, TOTAL=700M
+PROMPT  Autoextend: Configured for datafiles
+PROMPT 
+PROMPT Connection details:
+PROMPT - Username: medaid_user
+PROMPT - Password: firstaid123
+PROMPT - Service: tue_28757_Regis_medaid_db
+PROMPT - Host: localhost
+PROMPT - Port: 1521
+PROMPT 
+PROMPT ============================================
+
+COMMIT;
