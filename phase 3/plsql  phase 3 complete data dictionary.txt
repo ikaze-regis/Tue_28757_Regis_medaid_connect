@@ -1,0 +1,140 @@
+# COMPLETE DATA DICTIONARY - MEDAID CONNECT
+
+## 1. EMERGENCIES Table
+**Purpose:** Stores different types of emergencies with their severity levels
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| emergency_id | NUMBER(10) | PK, NOT NULL | Unique identifier |
+| emergency_code | VARCHAR2(20) | UNIQUE, NOT NULL | Short code (e.g., 'CHOKING') |
+| name | VARCHAR2(100) | NOT NULL | Full emergency name |
+| category | VARCHAR2(50) | NOT NULL | Medical/Trauma/Environmental/Pediatric |
+| severity | VARCHAR2(20) | CHECK | LOW, MEDIUM, HIGH, CRITICAL |
+| description | VARCHAR2(500) | | Detailed description |
+| avg_response_time | NUMBER(5) | | Avg seconds to resolve |
+| created_date | DATE | DEFAULT SYSDATE | Creation timestamp |
+
+## 2. FIRST_AID_GUIDES Table
+**Purpose:** Step-by-step instructions for each emergency
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| guide_id | NUMBER(10) | PK, NOT NULL | Unique guide identifier |
+| emergency_id | NUMBER(10) | FK → EMERGENCIES | Related emergency |
+| step_number | NUMBER(3) | NOT NULL | Sequence (1, 2, 3...) |
+| instruction | VARCHAR2(1000) | NOT NULL | Text instruction |
+| image_url | VARCHAR2(200) | | Optional image URL |
+| video_url | VARCHAR2(200) | | Optional video URL |
+| estimated_time | NUMBER(5) | | Estimated seconds |
+| warning | VARCHAR2(500) | | Important warnings |
+| created_date | DATE | DEFAULT SYSDATE | Creation date |
+| modified_date | DATE | | Last modification |
+
+## 3. USERS Table
+**Purpose:** Anonymous user tracking (privacy focused)
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| user_id | NUMBER(10) | PK, NOT NULL | Unique user ID |
+| session_id | VARCHAR2(100) | UNIQUE | Anonymous session tracking |
+| age_group | VARCHAR2(20) | CHECK | CHILD, TEEN, ADULT, SENIOR |
+| gender | CHAR(1) | CHECK | M, F, O (Other) |
+| user_type | VARCHAR2(30) | DEFAULT 'GENERAL' | GENERAL, CAREGIVER, etc. |
+| device_type | VARCHAR2(20) | | MOBILE, TABLET, DESKTOP |
+| created_date | DATE | DEFAULT SYSDATE | Account creation |
+
+## 4. LOCATIONS Table
+**Purpose:** Geographic locations (Rwanda context)
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| location_id | NUMBER(10) | PK, NOT NULL | Unique location ID |
+| city | VARCHAR2(100) | | Rwandan city name |
+| district | VARCHAR2(100) | | Administrative district |
+| province | VARCHAR2(100) | | Province (Kigali, Southern, etc.) |
+| country | VARCHAR2(100) | DEFAULT 'Rwanda' | Country name |
+| latitude | NUMBER(9,6) | | GPS latitude |
+| longitude | NUMBER(9,6) | | GPS longitude |
+| location_type | VARCHAR2(50) | CHECK | HOME, SCHOOL, WORK, PUBLIC, HEALTHCARE |
+| created_date | DATE | DEFAULT SYSDATE | Creation date |
+
+## 5. TIME_DIMENSION Table
+**Purpose:** Time tracking for BI analysis
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| time_id | NUMBER(10) | PK, NOT NULL | Unique time ID |
+| full_date | DATE | NOT NULL, UNIQUE | Complete date |
+| day_of_week | NUMBER(1) | | 1=Sunday, 7=Saturday |
+| day_name | VARCHAR2(10) | | Monday, Tuesday, etc. |
+| month_number | NUMBER(2) | | Month (1-12) |
+| month_name | VARCHAR2(10) | | January, February, etc. |
+| quarter | NUMBER(1) | | Quarter (1-4) |
+| year | NUMBER(4) | | Year |
+| is_weekend | CHAR(1) | CHECK | Y, N |
+| holiday_flag | CHAR(1) | DEFAULT 'N' | Y, N |
+
+## 6. GUIDE_USAGE Table (FACT TABLE)
+**Purpose:** Main fact table tracking all guide accesses
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| usage_id | NUMBER(10) | PK, NOT NULL | Unique usage ID |
+| guide_id | NUMBER(10) | FK → FIRST_AID_GUIDES | Guide accessed |
+| user_id | NUMBER(10) | FK → USERS | User who accessed |
+| location_id | NUMBER(10) | FK → LOCATIONS | Where accessed |
+| time_id | NUMBER(10) | FK → TIME_DIMENSION | When accessed |
+| usage_date | TIMESTAMP | DEFAULT SYSTIMESTAMP | Exact timestamp |
+| duration_sec | NUMBER(10) | | Time spent (seconds) |
+| completed | CHAR(1) | CHECK, DEFAULT 'N' | Y, N |
+| exit_step | NUMBER(3) | | Step where user exited |
+
+## 7. FEEDBACK Table
+**Purpose:** User ratings and comments on guides
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| feedback_id | NUMBER(10) | PK, NOT NULL | Unique feedback ID |
+| usage_id | NUMBER(10) | FK → GUIDE_USAGE | Related usage |
+| rating | NUMBER(1) | CHECK (1-5) | 1 to 5 stars |
+| helpful | CHAR(1) | CHECK, DEFAULT 'Y' | Y, N |
+| comment | VARCHAR2(1000) | | User comments |
+| feedback_date | TIMESTAMP | DEFAULT SYSTIMESTAMP | Feedback timestamp |
+
+## 8. HOLIDAYS Table (Phase VII)
+**Purpose:** Public holidays for business rules
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| holiday_id | NUMBER(10) | PK, NOT NULL | Unique holiday ID |
+| holiday_name | VARCHAR2(100) | NOT NULL | Holiday name |
+| holiday_date | DATE | NOT NULL | Date of holiday |
+| country | VARCHAR2(50) | DEFAULT 'Rwanda' | Country |
+| holiday_type | VARCHAR2(30) | CHECK | PUBLIC, NATIONAL, RELIGIOUS |
+| is_recurring | CHAR(1) | CHECK, DEFAULT 'Y' | Y, N |
+
+## 9. SYSTEM_USERS Table (Phase VII)
+**Purpose:** User roles and permissions
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| user_id | NUMBER(10) | PK, FK → USERS | User reference |
+| username | VARCHAR2(50) | NOT NULL | Display name |
+| user_role | VARCHAR2(20) | DEFAULT 'USER' | ADMIN, EDITOR, VIEWER, USER |
+| is_active | CHAR(1) | CHECK, DEFAULT 'Y' | Y, N |
+| assigned_date | DATE | DEFAULT SYSDATE | Role assignment date |
+
+## 10. AUDIT_LOG Table (Phase VII)
+**Purpose:** Comprehensive audit trail
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| log_id | NUMBER(10) | PK, NOT NULL | Unique log ID |
+| table_name | VARCHAR2(50) | NOT NULL | Table affected |
+| operation | VARCHAR2(10) | NOT NULL | INSERT, UPDATE, DELETE |
+| record_id | NUMBER(10) | | ID of affected record |
+| attempted_by | VARCHAR2(100) | DEFAULT USER | Database user |
+| attempt_date | TIMESTAMP | DEFAULT SYSTIMESTAMP | When attempted |
+| status | VARCHAR2(20) | DEFAULT 'DENIED' | SUCCESS, DENIED, ERROR |
+| error_message | VARCHAR2(200) | | Error description |
+
+## RELATIONSHIPS SUMMARY
+1. EMERGENCIES (1) → (M) FIRST_AID_GUIDES
+2. FIRST_AID_GUIDES (1) → (M) GUIDE_USAGE
+3. USERS (1) → (M) GUIDE_USAGE
+4. LOCATIONS (1) → (M) GUIDE_USAGE
+5. TIME_DIMENSION (1) → (M) GUIDE_USAGE
+6. GUIDE_USAGE (1) → (M) FEEDBACK
+7. USERS (1) → (1) SYSTEM_USERS (one-to-one)
+8. HOLIDAYS → Used by triggers for business rules
+9. AUDIT_LOG → Independent (logs all operations)

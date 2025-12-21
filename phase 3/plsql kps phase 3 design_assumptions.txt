@@ -1,0 +1,43 @@
+# DESIGN ASSUMPTIONS AND DECISIONS
+
+## 1. Data Volume Assumptions
+- **Initial Data:** 50 emergencies, 500 guide steps
+- **Users:** 10,000+ monthly anonymous sessions
+- **Usage:** 50,000+ guide accesses monthly
+- **Growth:** 20% monthly user growth anticipated
+
+## 2. Privacy and Security Assumptions
+- **User Anonymity:** No personal identification collected
+- **Session Tracking:** Unique session IDs for analytics
+- **Data Retention:** Usage data kept for 2 years minimum
+- **Compliance:** Meets Rwanda data protection guidelines
+
+## 3. Business Rule Assumptions
+- **Emergency Updates:** Guides updated quarterly
+- **Feedback Importance:** Ratings drive guide improvements
+- **Admin Restrictions:** Based on Rwandan working days/holidays
+- **Audit Requirements:** All critical operations logged
+
+## 4. Technical Assumptions
+- **Database:** Oracle 23ai with PL/SQL
+- **Concurrency:** Supports 100+ concurrent users
+- **Performance:** All queries optimized for <1s response
+- **Backup:** Daily backups with point-in-time recovery
+
+## 5. Rwanda-Specific Assumptions
+- **Emergency Types:** Focus on common Rwandan emergencies
+- **Location Data:** Covers all 5 provinces and major cities
+- **Holidays:** Includes all Rwanda public holidays
+- **Emergency Number:** Integrated with 112 emergency services
+
+## 6. Normalization Justification
+- **3NF Achieved:** No transitive dependencies
+- **Separation of Concerns:** Audit tables separate from operational
+- **Fact/Dimension:** Star schema approach for BI
+- **Scalability:** Design supports future feature additions
+
+## 7. Future Expansion Considerations
+- **Mobile Integration:** API ready for app development
+- **Multilingual:** Structure supports Kinyarwanda/English
+- **IoT Integration:** Smart device data collection
+- **AI Enhancements:** Machine learning for personalized guidance
