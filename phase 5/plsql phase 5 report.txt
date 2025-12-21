@@ -1,0 +1,43 @@
+# PHASE VI REPORT: PL/SQL Development
+**Project:** MedAid Connect Emergency First Aid Platform  
+**Student:** [Your Name]  
+**ID:** [Your Student ID]  
+**Date:** December 2025  
+**GitHub Repository:** [Your GitHub Link]
+
+## 1. Overview
+Successfully implemented comprehensive PL/SQL components for database interaction including procedures, functions, cursors, window functions, and packages.
+
+## 2. Components Developed
+
+### 2.1 Procedures (5 Implemented)
+1. **log_guide_usage** - Tracks when users access first aid guides
+2. **submit_feedback** - Handles user ratings and comments
+3. **get_emergency_stats** - Generates dashboard statistics
+4. **add_new_emergency_guide** - Adds new emergencies with step-by-step instructions
+5. **update_completion_status** - Updates user progress tracking
+
+### 2.2 Functions (5 Implemented)
+1. **calculate_user_engagement** - Computes engagement scores (0-100)
+2. **get_guide_effectiveness** - Measures guide performance
+3. **determine_age_group** - Categorizes users by age
+4. **calculate_location_risk_score** - Identifies high-risk areas
+5. **check_guide_exists** - Validates guide availability
+
+### 2.3 Cursors (2 Implemented)
+1. **process_user_analytics** - Explicit cursor for user segmentation
+2. **bulk_process_feedback** - Bulk collection for performance optimization
+
+### 2.4 Window Functions
+- **ROW_NUMBER(), RANK(), DENSE_RANK()** for emergency rankings
+- **LAG(), LEAD()** for time series analysis
+- **PARTITION BY** for user segmentation
+- **NTILE(), PERCENT_RANK(), RATIO_TO_REPORT()** for advanced analytics
+
+### 2.5 Packages (2 Implemented)
+1. **simple_emergency_pkg** - Emergency management operations
+2. **simple_analytics_pkg** - User analytics and reporting
+
+## 3. Testing Results
+
+### 3.1 Procedure Testing

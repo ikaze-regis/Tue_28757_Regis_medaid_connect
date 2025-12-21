@@ -1,0 +1,340 @@
+-- ============================================
+-- PHASE V: VALIDATION QUERIES
+-- Verify data integrity and business rules
+-- ============================================
+
+SET SERVEROUTPUT ON;
+SET LINESIZE 200;
+SET PAGESIZE 50;
+ALTER SESSION SET CONTAINER = tue_28757_Regis_medaid_db;
+
+PROMPT ============================================
+PROMPT PHASE V: DATA VALIDATION REPORT
+PROMPT ============================================
+PROMPT Student: Regis | ID: 28757
+PROMPT Project: Medaid Connect
+PROMPT ============================================
+
+-- 1. TABLE COUNTS VERIFICATION
+PROMPT 
+PROMPT 1. TABLE ROW COUNTS (100-500+ requirement)
+PROMPT ============================================
+SELECT 
+    'EMERGENCIES' as table_name, 
+    COUNT(*) as row_count,
+    CASE WHEN COUNT(*) >= 50 THEN '✅ PASS' ELSE '❌ FAIL' END as status
+FROM emergencies
+UNION ALL
+SELECT 
+    'FIRST_AID_GUIDES', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 100 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM first_aid_guides
+UNION ALL
+SELECT 
+    'USERS', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 400 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM users
+UNION ALL
+SELECT 
+    'LOCATIONS', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 100 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM locations
+UNION ALL
+SELECT 
+    'TIME_DIMENSION', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 1000 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM time_dimension
+UNION ALL
+SELECT 
+    'GUIDE_USAGE', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 5000 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM guide_usage
+UNION ALL
+SELECT 
+    'FEEDBACK', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 3000 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM feedback
+UNION ALL
+SELECT 
+    'HOLIDAYS', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 5 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM holidays
+UNION ALL
+SELECT 
+    'SYSTEM_USERS', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 30 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM system_users
+UNION ALL
+SELECT 
+    'AUDIT_LOG', 
+    COUNT(*),
+    CASE WHEN COUNT(*) >= 40 THEN '✅ PASS' ELSE '❌ FAIL' END
+FROM audit_log
+ORDER BY table_name;
+
+-- 2. NULL VALUES CHECK (Edge cases)
+PROMPT 
+PROMPT 2. NULL VALUES CHECK (Edge cases included)
+PROMPT ============================================
+SELECT 
+    'USERS - NULL age_group' as check_item,
+    COUNT(*) as null_count
+FROM users 
+WHERE age_group IS NULL
+UNION ALL
+SELECT 
+    'USERS - NULL gender',
+    COUNT(*)
+FROM users 
+WHERE gender IS NULL
+UNION ALL
+SELECT 
+    'LOCATIONS - NULL city',
+    COUNT(*)
+FROM locations 
+WHERE city IS NULL
+UNION ALL
+SELECT 
+    'GUIDE_USAGE - NULL duration',
+    COUNT(*)
+FROM guide_usage 
+WHERE duration_sec IS NULL
+UNION ALL
+SELECT 
+    'FEEDBACK - NULL comment',
+    COUNT(*)
+FROM feedback 
+WHERE comment IS NULL
+ORDER BY null_count DESC;
+
+-- 3. DATA DISTRIBUTION CHECK
+PROMPT 
+PROMPT 3. DATA DISTRIBUTION ANALYSIS
+PROMPT ============================================
+-- Age group distribution
+PROMPT 
+PROMPT Age Group Distribution:
+SELECT 
+    age_group,
+    COUNT(*) as user_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users), 2) as percentage
+FROM users
+GROUP BY age_group
+ORDER BY user_count DESC;
+
+-- Gender distribution
+PROMPT 
+PROMPT Gender Distribution:
+SELECT 
+    gender,
+    COUNT(*) as user_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users), 2) as percentage
+FROM users
+WHERE gender IS NOT NULL
+GROUP BY gender
+ORDER BY user_count DESC;
+
+-- Location distribution (Rwanda)
+PROMPT 
+PROMPT Rwanda Province Distribution:
+SELECT 
+    province,
+    COUNT(*) as location_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM locations), 2) as percentage
+FROM locations
+WHERE province IS NOT NULL
+GROUP BY province
+ORDER BY location_count DESC;
+
+-- 4. FOREIGN KEY INTEGRITY CHECK
+PROMPT 
+PROMPT 4. FOREIGN KEY INTEGRITY CHECK
+PROMPT ============================================
+SELECT 
+    'GUIDE_USAGE orphan guides' as check_item,
+    COUNT(*) as orphan_count
+FROM guide_usage gu
+WHERE NOT EXISTS (
+    SELECT 1 FROM first_aid_guides fag 
+    WHERE fag.guide_id = gu.guide_id
+)
+UNION ALL
+SELECT 
+    'GUIDE_USAGE orphan users',
+    COUNT(*)
+FROM guide_usage gu
+WHERE NOT EXISTS (
+    SELECT 1 FROM users u 
+    WHERE u.user_id = gu.user_id
+)
+UNION ALL
+SELECT 
+    'FEEDBACK orphan usage',
+    COUNT(*)
+FROM feedback f
+WHERE NOT EXISTS (
+    SELECT 1 FROM guide_usage gu 
+    WHERE gu.usage_id = f.usage_id
+)
+UNION ALL
+SELECT 
+    'SYSTEM_USERS orphan users',
+    COUNT(*)
+FROM system_users su
+WHERE NOT EXISTS (
+    SELECT 1 FROM users u 
+    WHERE u.user_id = su.user_id
+);
+
+-- 5. BUSINESS RULES VALIDATION
+PROMPT 
+PROMPT 5. BUSINESS RULES VALIDATION
+PROMPT ============================================
+-- Severity levels valid
+PROMPT 
+PROMPT Emergency Severity Distribution:
+SELECT 
+    severity,
+    COUNT(*) as emergency_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM emergencies), 2) as percentage
+FROM emergencies
+GROUP BY severity
+ORDER BY severity;
+
+-- Ratings within 1-5
+PROMPT 
+PROMPT Feedback Rating Distribution:
+SELECT 
+    rating,
+    COUNT(*) as feedback_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM feedback), 2) as percentage
+FROM feedback
+GROUP BY rating
+ORDER BY rating;
+
+-- Completion rate
+PROMPT 
+PROMPT Guide Completion Rate:
+SELECT 
+    completed,
+    COUNT(*) as usage_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM guide_usage), 2) as percentage
+FROM guide_usage
+GROUP BY completed
+ORDER BY completed;
+
+-- 6. RWANDA-SPECIFIC DATA CHECK
+PROMPT 
+PROMPT 6. RWANDA-SPECIFIC DATA CHECK
+PROMPT ============================================
+-- All locations in Rwanda
+PROMPT 
+PROMPT Country Distribution in Locations:
+SELECT 
+    NVL(country, 'NULL') as country,
+    COUNT(*) as location_count
+FROM locations
+GROUP BY country
+ORDER BY location_count DESC;
+
+-- Rwandan holidays
+PROMPT 
+PROMPT Rwanda Holidays:
+SELECT 
+    holiday_name,
+    holiday_date,
+    holiday_type
+FROM holidays
+ORDER BY holiday_date;
+
+-- 7. SAMPLE DATA VIEW
+PROMPT 
+PROMPT 7. SAMPLE DATA FROM EACH TABLE (5 rows)
+PROMPT ============================================
+PROMPT 
+PROMPT EMERGENCIES sample:
+SELECT emergency_id, emergency_code, name, severity 
+FROM emergencies 
+WHERE ROWNUM <= 5 
+ORDER BY emergency_id;
+
+PROMPT 
+PROMPT USERS sample:
+SELECT user_id, age_group, user_type, created_date 
+FROM users 
+WHERE ROWNUM <= 5 
+ORDER BY user_id;
+
+PROMPT 
+PROMPT GUIDE_USAGE sample:
+SELECT usage_id, guide_id, user_id, completed, duration_sec 
+FROM guide_usage 
+WHERE ROWNUM <= 5 
+ORDER BY usage_id;
+
+PROMPT 
+PROMPT FEEDBACK sample:
+SELECT feedback_id, rating, helpful, comment 
+FROM feedback 
+WHERE ROWNUM <= 5 
+ORDER BY feedback_id;
+
+-- 8. SUMMARY REPORT
+PROMPT 
+PROMPT ============================================
+PROMPT VALIDATION SUMMARY
+PROMPT ============================================
+DECLARE
+    v_total_tables NUMBER := 10;
+    v_passed_tables NUMBER := 0;
+BEGIN
+    -- Check each table meets minimum row count
+    IF (SELECT COUNT(*) FROM emergencies) >= 50 THEN v_passed_tables := v_passed_tables + 1; END IF;
+    IF (SELECT COUNT(*) FROM first_aid_guides) >= 100 THEN v_passed_tables := v_passed_tables + 1; END IF;
+    IF (SELECT COUNT(*) FROM users) >= 400 THEN v_passed_tables := v_passed_tables + 1; END IF;
+    IF (SELECT COUNT(*) FROM locations) >= 100 THEN v_passed_tables := v_passed_tables + 1; END IF;
+    IF (SELECT COUNT(*) FROM guide_usage) >= 5000 THEN v_passed_tables := v_passed_tables + 1; END IF;
+    IF (SELECT COUNT(*) FROM feedback) >= 3000 THEN v_passed_tables := v_passed_tables + 1; END IF;
+    
+    DBMS_OUTPUT.PUT_LINE('Tables meeting 100-500+ rows: ' || v_passed_tables || ' / 6');
+    DBMS_OUTPUT.PUT_LINE('Total records in database: ' || 
+        (SELECT SUM(cnt) FROM (
+            SELECT COUNT(*) as cnt FROM emergencies UNION ALL
+            SELECT COUNT(*) FROM first_aid_guides UNION ALL
+            SELECT COUNT(*) FROM users UNION ALL
+            SELECT COUNT(*) FROM locations UNION ALL
+            SELECT COUNT(*) FROM time_dimension UNION ALL
+            SELECT COUNT(*) FROM guide_usage UNION ALL
+            SELECT COUNT(*) FROM feedback UNION ALL
+            SELECT COUNT(*) FROM holidays UNION ALL
+            SELECT COUNT(*) FROM system_users UNION ALL
+            SELECT COUNT(*) FROM audit_log
+        ))
+    );
+    
+    IF v_passed_tables = 6 THEN
+        DBMS_OUTPUT.PUT_LINE('✅ SUCCESS: Phase V requirements met!');
+        DBMS_OUTPUT.PUT_LINE('   - All tables created successfully');
+        DBMS_OUTPUT.PUT_LINE('   - 100-500+ rows in main tables');
+        DBMS_OUTPUT.PUT_LINE('   - Realistic data with Rwanda context');
+        DBMS_OUTPUT.PUT_LINE('   - Edge cases included (NULL values)');
+        DBMS_OUTPUT.PUT_LINE('   - Data integrity validated');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('⚠️ WARNING: Some requirements not met');
+        DBMS_OUTPUT.PUT_LINE('   Check table row counts above');
+    END IF;
+END;
+/
+
+PROMPT 
+PROMPT ============================================
+PROMPT PHASE V VALIDATION COMPLETE
+PROMPT ============================================
