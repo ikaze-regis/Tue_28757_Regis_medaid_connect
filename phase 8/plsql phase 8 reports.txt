@@ -1,0 +1,51 @@
+# PHASE VII REPORT: Advanced Programming & Auditing
+**Project:** MedAid Connect Emergency First Aid Platform  
+**Student:** [Your Name]  
+**ID:** [Your Student ID]  
+**Date:** December 2025
+
+## 1. Business Rule Implementation
+
+### 1.1 Rule Specification
+**CRITICAL REQUIREMENT:** ADMIN users cannot INSERT/UPDATE/DELETE on:
+- WEEKDAYS (Monday-Friday)
+- PUBLIC HOLIDAYS (upcoming month only)
+
+### 1.2 Implementation Approach
+Implemented through combination of:
+- Helper functions for condition checking
+- Database triggers for rule enforcement
+- Audit logging for compliance tracking
+
+## 2. Components Developed
+
+### 2.1 Helper Functions
+1. **is_weekday_now()** - Returns 'YES' if current day is Mon-Fri
+2. **is_holiday_now()** - Checks if current date is in holidays table
+3. **check_admin_user()** - Identifies if current user has admin privileges
+4. **log_denied_attempt()** - Logs blocked operations to audit trail
+
+### 2.2 Triggers Implemented
+1. **trg_block_weekday_emergencies**
+   - Table: EMERGENCIES
+   - Blocks: INSERT/UPDATE/DELETE by ADMIN on weekdays
+   - Error Code: -20001
+
+2. **trg_block_holiday_guides**
+   - Table: FIRST_AID_GUIDES
+   - Blocks: INSERT/UPDATE/DELETE by ADMIN on holidays
+   - Error Code: -20002
+
+3. **trg_audit_guide_usage**
+   - Table: GUIDE_USAGE
+   - Logs: All INSERT/UPDATE operations
+   - Status: SUCCESS
+
+4. **trg_audit_feedback**
+   - Table: FEEDBACK
+   - Logs: All INSERT/UPDATE/DELETE operations
+   - Status: SUCCESS
+
+## 3. Testing Results
+
+### 3.1 Weekday Restriction Test
